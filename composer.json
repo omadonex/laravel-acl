@@ -1,0 +1,29 @@
+{
+    "name": "omadonex/laravel-acl",
+    "description": "Acl for laravel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yuriy Arkhipov",
+            "email": "omadonex@yandex.ru"
+        }
+    ],
+    "require": {
+        "illuminate/support": "5.5.*",
+        "omadonex/laravel-support": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Omadonex\\LaravelAcl\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Omadonex\\LaravelAcl\\Providers\\AclServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
