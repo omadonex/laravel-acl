@@ -13,7 +13,7 @@ use Omadonex\LaravelSupport\Classes\ConstantsCustom;
 
 class Generate extends Command
 {
-    const NWIDART_CLASS = '\Nwidart\Modules\Facades\Module2';
+    const NWIDART_CLASS = '\Nwidart\Modules\Facades\Module';
     /**
      * The name and signature of the console command.
      *
@@ -57,17 +57,18 @@ class Generate extends Command
         PrivilegeTranslate::truncate();
         \DB::table('acl_pivot_privilege_role')->where(ConstantsCustom::DB_FIELD_PROTECTED_GENERATE, true)->delete();
 
-        $aclPaths = [
-            ['config' => base_path('config/acl.php'), 'lang' => resource_path('lang/vendor/acl')],
+        $aclEntries = [
+            ['configPath' => base_path('config/acl.php'), 'langPath' => resource_path('lang/vendor/acl'), 'module' => false],
         ];
         if (class_exists(self::NWIDART_CLASS)) {
             foreach (\Nwidart\Modules\Facades\Module::all() as $module) {
                 $configPath = $module->getExtraPath('Config/acl/acl.php');
                 $langPath = $module->getExtraPath('Config/acl/lang');
                 if (file_exists($configPath)) {
-                    $entries[] = [
-                        'config' => $configPath,
-                        'lang' => $langPath,
+                    $aclEntries[] = [
+                        'configPath' => $configPath,
+                        'langPath' => $langPath,
+                        'module' => true,
                     ];
                 }
             }
@@ -75,15 +76,18 @@ class Generate extends Command
 
         Model::unguard();
 
-        foreach ($aclPaths as $aclPath) {
-            $config = require_once $aclPath['config'];
-            $langPath = $aclPath['lang'];
+        $allPrivileges = [];
+        foreach ($aclEntries as $aclEntry) {
+            $config = include $aclEntry['configPath'];
+            $langPath = $aclEntry['langPath'];
             $rolesConfig = $config['roles'];
             $privilegesConfig = $config['privileges'];
+            $extendConfig = array_key_exists('extend', $config) ? $config['extend'] : [];
 
             $langKeys = array_diff(scandir($langPath), ['.', '..']);
 
             foreach ($privilegesConfig as $privilegeConfig) {
+                $allPrivileges[] = $privilegeConfig['id'];
                 Privilege::create([
                     'id' => $privilegeConfig['id'],
                 ]);
@@ -99,10 +103,12 @@ class Generate extends Command
                 }
             }
 
-            array_unshift($rolesConfig,
-                ['id' => ConstantsAcl::ROLE_USER],
-                ['id' => ConstantsAcl::ROLE_ROOT, 'staff' => true]
-            );
+            if (!$aclEntry['module']) {
+                array_unshift($rolesConfig,
+                    ['id' => ConstantsAcl::ROLE_USER],
+                    ['id' => ConstantsAcl::ROLE_ROOT, 'staff' => true]
+                );
+            }
 
             foreach ($rolesConfig as $roleConfig) {
                 $staff = array_key_exists('staff', $roleConfig) ? $roleConfig['staff'] : false;
@@ -133,7 +139,14 @@ class Generate extends Command
                     }
                 }
             }
+
+            foreach ($extendConfig as $roleKey => $privilegesKeys) {
+                Role::find($roleKey)->privileges()->attach($privilegesKeys, [ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true]);
+            }
         }
+
+        \DB::table('acl_pivot_privilege_role')->whereNotIn('privilege_id', $allPrivileges)->delete();
+        \DB::table('acl_pivot_privilege_user')->whereNotIn('privilege_id', $allPrivileges)->delete();
 
         Model::reguard();
     }
