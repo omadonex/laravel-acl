@@ -13,6 +13,7 @@ use Omadonex\LaravelSupport\Classes\ConstantsCustom;
 
 class Generate extends Command
 {
+    const NWIDART_CLASS = '\Nwidart\Modules\Facades\Module2';
     /**
      * The name and signature of the console command.
      *
@@ -44,10 +45,8 @@ class Generate extends Command
      */
     public function handle()
     {
-        $langPath = resource_path('lang/vendor/acl');
-        $configPath = config_path('acl.php');
-        if (!file_exists($langPath) || !file_exists($configPath)) {
-            $this->error('Error: config and lang files are not published!');
+        if (!file_exists(resource_path('lang/vendor/acl')) || !file_exists(base_path('config/acl.php'))) {
+            $this->error('Error: main config and lang files are not published!');
 
             return ;
         }
@@ -58,62 +57,80 @@ class Generate extends Command
         PrivilegeTranslate::truncate();
         \DB::table('acl_pivot_privilege_role')->where(ConstantsCustom::DB_FIELD_PROTECTED_GENERATE, true)->delete();
 
-
-        $config = config('acl');
-        $rolesConfig = $config['roles'];
-        $privilegesConfig = $config['privileges'];
-
-        $langKeys = array_diff(scandir($langPath), ['.', '..']);
-
-        Model::unguard();
-
-        foreach ($privilegesConfig as $privilegeConfig) {
-            Privilege::create([
-                'id' => $privilegeConfig['id'],
-            ]);
-
-            foreach ($langKeys as $lang) {
-                $langFile = include "{$langPath}/{$lang}/privileges.php";
-                PrivilegeTranslate::create([
-                    'model_id' => $privilegeConfig['id'],
-                    'lang' => $lang,
-                    'name' => $langFile[$privilegeConfig['id']]['name'],
-                    'description'  => $langFile[$privilegeConfig['id']]['description'],
-                ]);
+        $aclPaths = [
+            ['config' => base_path('config/acl.php'), 'lang' => resource_path('lang/vendor/acl')],
+        ];
+        if (class_exists(self::NWIDART_CLASS)) {
+            foreach (\Nwidart\Modules\Facades\Module::all() as $module) {
+                $configPath = $module->getExtraPath('Config/acl/acl.php');
+                $langPath = $module->getExtraPath('Config/acl/lang');
+                if (file_exists($configPath)) {
+                    $entries[] = [
+                        'config' => $configPath,
+                        'lang' => $langPath,
+                    ];
+                }
             }
         }
 
-        array_unshift($rolesConfig,
-            ['id' => ConstantsAcl::ROLE_USER],
-            ['id' => ConstantsAcl::ROLE_ROOT, 'staff' => true]
-        );
+        Model::unguard();
 
-        foreach ($rolesConfig as $roleConfig) {
-            $staff = array_key_exists('staff', $roleConfig) ? $roleConfig['staff'] : false;
-            $root = $roleConfig['id'] === ConstantsAcl::ROLE_ROOT;
+        foreach ($aclPaths as $aclPath) {
+            $config = require_once $aclPath['config'];
+            $langPath = $aclPath['lang'];
+            $rolesConfig = $config['roles'];
+            $privilegesConfig = $config['privileges'];
 
-            $role = Role::create([
-                'id' => $roleConfig['id'],
-                'is_root' => $root,
-                'is_staff' => $staff,
-                ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
-            ]);
+            $langKeys = array_diff(scandir($langPath), ['.', '..']);
 
-            foreach ($langKeys as $lang) {
-                $langFile = include "{$langPath}/{$lang}/roles.php";
-                RoleTranslate::create([
-                    'model_id' => $roleConfig['id'],
-                    'lang' => $lang,
-                    'name' => $langFile[$roleConfig['id']]['name'],
-                    'description'  => $langFile[$roleConfig['id']]['description'],
-                    ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
+            foreach ($privilegesConfig as $privilegeConfig) {
+                Privilege::create([
+                    'id' => $privilegeConfig['id'],
                 ]);
+
+                foreach ($langKeys as $lang) {
+                    $langFile = include "{$langPath}/{$lang}/privileges.php";
+                    PrivilegeTranslate::create([
+                        'model_id' => $privilegeConfig['id'],
+                        'lang' => $lang,
+                        'name' => $langFile[$privilegeConfig['id']]['name'],
+                        'description'  => $langFile[$privilegeConfig['id']]['description'],
+                    ]);
+                }
             }
 
-            if (array_key_exists('privileges', $roleConfig)) {
-                $privileges = $roleConfig['privileges'];
-                foreach ($privileges as $privilege) {
-                    $role->privileges()->attach($privilege, [ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true]);
+            array_unshift($rolesConfig,
+                ['id' => ConstantsAcl::ROLE_USER],
+                ['id' => ConstantsAcl::ROLE_ROOT, 'staff' => true]
+            );
+
+            foreach ($rolesConfig as $roleConfig) {
+                $staff = array_key_exists('staff', $roleConfig) ? $roleConfig['staff'] : false;
+                $root = $roleConfig['id'] === ConstantsAcl::ROLE_ROOT;
+
+                $role = Role::create([
+                    'id' => $roleConfig['id'],
+                    'is_root' => $root,
+                    'is_staff' => $staff,
+                    ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
+                ]);
+
+                foreach ($langKeys as $lang) {
+                    $langFile = include "{$langPath}/{$lang}/roles.php";
+                    RoleTranslate::create([
+                        'model_id' => $roleConfig['id'],
+                        'lang' => $lang,
+                        'name' => $langFile[$roleConfig['id']]['name'],
+                        'description'  => $langFile[$roleConfig['id']]['description'],
+                        ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
+                    ]);
+                }
+
+                if (array_key_exists('privileges', $roleConfig)) {
+                    $privileges = $roleConfig['privileges'];
+                    foreach ($privileges as $privilege) {
+                        $role->privileges()->attach($privilege, [ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true]);
+                    }
                 }
             }
         }
