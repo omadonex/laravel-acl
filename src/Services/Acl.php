@@ -89,7 +89,8 @@ class Acl implements IAcl
             //Персонально назначенные пользователю привилегии могут иметь срок истечения
             $userPrivileges = $user->privileges->filter(function ($value, $key) {
                 //TODO omadonex: проверить корректность проверки даты, учитывая таймзоны
-               return is_null($value->expires_at) || ($value->expires_at > Carbon::now()->timestamp);
+                $nowTs = Carbon::now()->timestamp;
+                return is_null($value->expires_at) || (($value->expires_at > $nowTs) && ($value->starting_at < $nowTs));
             });
             $this->privileges = $this->privileges->concat($userPrivileges);
             $this->privileges = $this->privileges->unique->id->values();
