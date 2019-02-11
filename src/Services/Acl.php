@@ -2,6 +2,7 @@
 
 namespace Omadonex\LaravelAcl\Services;
 
+use Illuminate\Support\Carbon;
 use Omadonex\LaravelAcl\Classes\ConstantsAcl;
 use Omadonex\LaravelAcl\Classes\Exceptions\OmxUserResourceClassNotSetException;
 use Omadonex\LaravelAcl\Interfaces\IAcl;
@@ -85,7 +86,12 @@ class Acl implements IAcl
             foreach ($user->roles as $role) {
                 $this->privileges = $this->privileges->concat($role->privileges);
             }
-            $this->privileges = $this->privileges->concat($user->privileges);
+            //Персонально назначенные пользователю привилегии могут иметь срок истечения
+            $userPrivileges = $user->privileges->filter(function ($value, $key) {
+                //TODO omadonex: проверить корректность проверки даты, учитывая таймзоны
+               return is_null($value->expires_at) || ($value->expires_at > Carbon::now()->timestamp);
+            });
+            $this->privileges = $this->privileges->concat($userPrivileges);
             $this->privileges = $this->privileges->unique->id->values();
         }
 

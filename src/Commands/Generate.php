@@ -5,6 +5,8 @@ namespace Omadonex\LaravelAcl\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Omadonex\LaravelAcl\Classes\ConstantsAcl;
+use Omadonex\LaravelAcl\Models\PrivilegeGroup;
+use Omadonex\LaravelAcl\Models\PrivilegeGroupTranslate;
 use Omadonex\LaravelAcl\Models\PrivilegeTranslate;
 use Omadonex\LaravelAcl\Models\RoleTranslate;
 use Omadonex\LaravelAcl\Models\Privilege;
@@ -54,6 +56,8 @@ class Generate extends Command
         Role::protectedGenerate()->delete();
         RoleTranslate::protectedGenerate()->delete();
         Privilege::truncate();
+        PrivilegeGroup::truncate();
+        PrivilegeGroupTranslate::truncate();
         PrivilegeTranslate::truncate();
         \DB::table('acl_pivot_privilege_role')->where(ConstantsCustom::DB_FIELD_PROTECTED_GENERATE, true)->delete();
 
@@ -80,17 +84,20 @@ class Generate extends Command
         foreach ($aclEntries as $aclEntry) {
             $config = include $aclEntry['configPath'];
             $langPath = $aclEntry['langPath'];
-            $rolesConfig = $config['roles'];
-            $privilegesConfig = $config['privileges'];
+            $rolesConfig = array_key_exists('roles', $config) ? $config['roles'] : [];
+            $privilegesConfig = array_key_exists('privileges', $config) ? $config['privileges'] : [];
+            $privilegesGroupsConfig = array_key_exists('privilegesGroups', $config) ? $config['privilegesGroups'] : [];
             $extendConfig = array_key_exists('extend', $config) ? $config['extend'] : [];
 
             $langKeys = array_diff(scandir($langPath), ['.', '..']);
 
             foreach ($privilegesConfig as $privilegeConfig) {
                 $allPrivileges[] = $privilegeConfig['id'];
-                Privilege::create([
-                    'id' => $privilegeConfig['id'],
-                ]);
+                $createData = ['id' => $privilegeConfig['id']];
+                if (isset($privilegeConfig['privilege_group_id'])) {
+                    $createData['privilege_group_id'] = $privilegeConfig['privilege_group_id'];
+                }
+                Privilege::create($createData);
 
                 foreach ($langKeys as $lang) {
                     $langFile = include "{$langPath}/{$lang}/privileges.php";
@@ -99,6 +106,28 @@ class Generate extends Command
                         'lang' => $lang,
                         'name' => $langFile[$privilegeConfig['id']]['name'],
                         'description'  => $langFile[$privilegeConfig['id']]['description'],
+                    ]);
+                }
+            }
+
+            if (!$aclEntry['module']) {
+                array_unshift($privilegesGroupsConfig,
+                    ['id' => ConstantsAcl::PRIVILEGE_GROUP_ID_DEFAULT]
+                );
+            }
+
+            foreach ($privilegesGroupsConfig as $privilegeGroupConfig) {
+                PrivilegeGroup::create([
+                    'id' => $privilegeGroupConfig['id'],
+                ]);
+
+                foreach ($langKeys as $lang) {
+                    $langFile = include "{$langPath}/{$lang}/privilegesGroups.php";
+                    PrivilegeGroupTranslate::create([
+                        'model_id' => $privilegeGroupConfig['id'],
+                        'lang' => $lang,
+                        'name' => $langFile[$privilegeGroupConfig['id']]['name'],
+                        'description'  => $langFile[$privilegeGroupConfig['id']]['description'],
                     ]);
                 }
             }

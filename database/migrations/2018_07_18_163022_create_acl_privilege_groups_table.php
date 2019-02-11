@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateAclPrivilegesTable extends Migration
+class CreateAclPrivilegeGroupsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,8 @@ class CreateAclPrivilegesTable extends Migration
      */
     public function up()
     {
-        Schema::create('acl_privileges', function (Blueprint $table) {
+        Schema::create('acl_privilege_groups', function (Blueprint $table) {
             \Omadonex\LaravelSupport\Classes\Utils\UtilsDb::addPrimaryStr($table);
-            $table->string('privilege_group_id', \Omadonex\LaravelSupport\Classes\ConstantsCustom::DB_FIELD_LEN_PRIMARY_STR)
-                ->default(\Omadonex\LaravelAcl\Classes\ConstantsAcl::PRIVILEGE_GROUP_ID_DEFAULT)->index();
         });
     }
 
@@ -27,6 +25,6 @@ class CreateAclPrivilegesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('acl_privileges');
+        Schema::dropIfExists('acl_privilege_groups');
     }
 }
