@@ -20,6 +20,7 @@ class Acl implements IAcl
     protected $userResourceClass;
     protected $isUser;
     protected $isRoot;
+    protected $additionalRelations;
 
     public function __construct($userResourceClass = null, $deepMode = true)
     {
@@ -30,6 +31,7 @@ class Acl implements IAcl
         $this->userResourceClass = $userResourceClass;
         $this->isUser = false;
         $this->isRoot = false;
+        $this->additionalRelations = [];
     }
 
     public function isDeepMode()
@@ -71,7 +73,7 @@ class Acl implements IAcl
 
         $this->user = $user;
 
-        $relations = ['roles', 'roles.translates'];
+        $relations = array_merge($this->additionalRelations, ['roles', 'roles.translates']);
         if ($this->isDeepMode()) {
             $relations[] = 'roles.privileges';
             $relations[] = 'roles.privileges.translates';
