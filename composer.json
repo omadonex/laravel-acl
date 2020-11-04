@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "illuminate/support": "5.5.*",
+        "illuminate/support": "8.0.*",
         "omadonex/laravel-support": "dev-master"
     },
     "autoload": {
