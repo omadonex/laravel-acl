@@ -17,7 +17,7 @@ class Role extends Model
     public $timestamps = false;
 
     protected $casts = [
-        ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => 'Boolean',
+        ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => 'boolean',
     ];
 
     public $availableRelations = ['translates', 'privileges'];
