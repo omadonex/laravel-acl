@@ -30,6 +30,10 @@
         {
             "type": "path",
             "url": "../laravel-support"
+        },
+        {
+            "type": "path",
+            "url": "../laravel-acl"
         }
     ]
 }

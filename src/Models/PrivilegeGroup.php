@@ -3,7 +3,7 @@
 namespace Omadonex\LaravelAcl\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Omadonex\LaravelSupport\Traits\TranslateTrait;
+use Omadonex\LaravelLocale\Traits\TranslateTrait;
 
 class PrivilegeGroup extends Model
 {

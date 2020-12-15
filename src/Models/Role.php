@@ -5,7 +5,7 @@ namespace Omadonex\LaravelAcl\Models;
 use Illuminate\Database\Eloquent\Model;
 use Omadonex\LaravelSupport\Classes\ConstantsCustom;
 use Omadonex\LaravelSupport\Traits\ProtectedGenerateTrait;
-use Omadonex\LaravelSupport\Traits\TranslateTrait;
+use Omadonex\LaravelLocale\Traits\TranslateTrait;
 
 class Role extends Model
 {
