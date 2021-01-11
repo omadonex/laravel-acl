@@ -2,10 +2,10 @@
 
 namespace Omadonex\LaravelAcl\Http\Resources;
 
-use Illuminate\Http\Resources\Json\Resource;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Omadonex\LaravelLocale\Traits\TranslateResourceTrait;
 
-class PermissionResource extends Resource
+class PermissionResource extends JsonResource
 {
     use TranslateResourceTrait;
 

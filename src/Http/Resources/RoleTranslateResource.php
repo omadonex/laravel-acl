@@ -2,9 +2,9 @@
 
 namespace Omadonex\LaravelAcl\Http\Resources;
 
-use Illuminate\Http\Resources\Json\Resource;
+use Illuminate\Http\Resources\Json\JsonResource;
 
-class RoleTranslateResource extends Resource
+class RoleTranslateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
