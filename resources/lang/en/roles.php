@@ -10,6 +10,6 @@ return [
 
     ConstantsAcl::ROLE_ROOT => [
         'name' => 'Root',
-        'description' => 'A role for super privileged user (root)',
+        'description' => 'A role for super user (root)',
     ],
 ];

@@ -6,7 +6,7 @@ use Illuminate\Support\Carbon;
 use Omadonex\LaravelAcl\Classes\ConstantsAcl;
 use Omadonex\LaravelAcl\Classes\Exceptions\OmxUserResourceClassNotSetException;
 use Omadonex\LaravelAcl\Interfaces\IAcl;
-use Omadonex\LaravelAcl\Models\Privilege;
+use Omadonex\LaravelAcl\Models\Permission;
 use Omadonex\LaravelAcl\Models\Role;
 use Omadonex\LaravelAcl\Traits\AclTrait;
 use Omadonex\LaravelSupport\Classes\Exceptions\OmxClassNotUsesTraitException;
@@ -16,7 +16,7 @@ class Acl implements IAcl
     protected $deepMode;
     protected $user;
     protected $roles;
-    protected $privileges;
+    protected $permissions;
     protected $userResourceClass;
     protected $isUser;
     protected $isRoot;
@@ -27,7 +27,7 @@ class Acl implements IAcl
         $this->deepMode = $deepMode;
         $this->user = null;
         $this->roles = collect();
-        $this->privileges = collect();
+        $this->permissions = collect();
         $this->userResourceClass = $userResourceClass;
         $this->isUser = false;
         $this->isRoot = false;
@@ -39,20 +39,20 @@ class Acl implements IAcl
         return $this->deepMode;
     }
 
-    public function getAvailableRoles($privileges = true)
+    public function getAvailableRoles($permissions = true)
     {
         $relations = ['translates'];
-        if ($privileges) {
-            $relations[] = 'privileges';
-            $relations[] = 'privileges.translates';
+        if ($permissions) {
+            $relations[] = 'permissions';
+            $relations[] = 'permissions.translates';
         }
 
         return Role::with($relations)->get();
     }
 
-    public function getAvailablePrivileges()
+    public function getAvailablePermissions()
     {
-        return Privilege::with('translates')->get();
+        return Permission::with('translates')->get();
     }
 
     public function loggedIn()
@@ -75,10 +75,10 @@ class Acl implements IAcl
 
         $relations = array_merge($this->additionalRelations, ['roles', 'roles.translates']);
         if ($this->isDeepMode()) {
-            $relations[] = 'roles.privileges';
-            $relations[] = 'roles.privileges.translates';
-            $relations[] = 'privileges';
-            $relations[] = 'privileges.translates';
+            $relations[] = 'roles.permissions';
+            $relations[] = 'roles.permissions.translates';
+            $relations[] = 'permissions';
+            $relations[] = 'permissions.translates';
         }
         $user->load($relations);
 
@@ -86,16 +86,16 @@ class Acl implements IAcl
 
         if ($this->isDeepMode()) {
             foreach ($user->roles as $role) {
-                $this->privileges = $this->privileges->concat($role->privileges);
+                $this->permissions = $this->permissions->concat($role->permissions);
             }
             //Персонально назначенные пользователю привилегии могут иметь срок истечения
-            $userPrivileges = $user->privileges->filter(function ($value, $key) {
+            $userPermissions = $user->permissions->filter(function ($value, $key) {
                 //TODO omadonex: проверить корректность проверки даты, учитывая таймзоны
                 $nowTs = Carbon::now()->timestamp;
                 return is_null($value->expires_at) || (($value->expires_at > $nowTs) && ($value->starting_at < $nowTs));
             });
-            $this->privileges = $this->privileges->concat($userPrivileges);
-            $this->privileges = $this->privileges->unique->id->values();
+            $this->permissions = $this->permissions->concat($userPermissions);
+            $this->permissions = $this->permissions->unique->id->values();
         }
 
         if (!$this->roles->count()) {
@@ -141,9 +141,9 @@ class Acl implements IAcl
         return $onlyNames ? $this->roles->map->id : $this->roles;
     }
 
-    public function getPrivileges($onlyNames = false)
+    public function getPermissions($onlyNames = false)
     {
-        return $onlyNames ? $this->privileges->map->id : $this->privileges;
+        return $onlyNames ? $this->permissions->map->id : $this->permissions;
     }
 
     public function hasRoles($roles)
@@ -154,16 +154,16 @@ class Acl implements IAcl
         return !count(array_diff($checkRoles, $userRoles));
     }
 
-    public function check($privileges)
+    public function check($permissions)
     {
         if ($this->isRoot()) {
             return true;
         }
 
-        $checkPrivileges = is_array($privileges) ? $privileges : [$privileges];
-        $userPrivileges = $this->privileges->map->id->toArray();
+        $checkPermissions = is_array($permissions) ? $permissions : [$permissions];
+        $userPermissions = $this->permissions->map->id->toArray();
 
-        return !count(array_diff($checkPrivileges, $userPrivileges));
+        return !count(array_diff($checkPermissions, $userPermissions));
     }
 
     public function checkRoles($rolesCombined, $rootStrict = false)
@@ -202,11 +202,11 @@ class Acl implements IAcl
         $finalUser->roles()->sync($roles);
     }
 
-    public function addPrivilege($privilege, $user = null)
+    public function addPermission($permission, $user = null)
     {
         $finalUser = $user ?: $this->user;
-        $privileges = array_merge($finalUser->privileges->map->id, $privilege);
-        $finalUser->privileges()->sync($privileges);
+        $permissions = array_merge($finalUser->permissions->map->id, $permission);
+        $finalUser->permissions()->sync($permissions);
     }
 
     public function removeRole($role, $user = null)
@@ -215,9 +215,9 @@ class Acl implements IAcl
         $finalUser->roles()->detach($role);
     }
 
-    public function removePrivilege($privilege, $user = null)
+    public function removePermission($permission, $user = null)
     {
         $finalUser = $user ?: $this->user;
-        $finalUser->privileges()->detach($privilege);
+        $finalUser->permissions()->detach($permission);
     }
 }

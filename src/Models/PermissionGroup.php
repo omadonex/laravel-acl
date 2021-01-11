@@ -5,19 +5,19 @@ namespace Omadonex\LaravelAcl\Models;
 use Illuminate\Database\Eloquent\Model;
 use Omadonex\LaravelLocale\Traits\TranslateTrait;
 
-class PrivilegeGroup extends Model
+class PermissionGroup extends Model
 {
     use TranslateTrait;
 
-    protected $table = 'acl_privilege_groups';
+    protected $table = 'acl_permission_groups';
     protected $fillable = [];
     public $incrementing = false;
     public $timestamps = false;
 
-    public $availableRelations = ['translates', 'privileges'];
+    public $availableRelations = ['translates', 'permissions'];
 
-    public function privileges()
+    public function permissions()
     {
-        return $this->hasMany(Privilege::class);
+        return $this->hasMany(Permission::class);
     }
 }

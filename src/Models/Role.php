@@ -20,10 +20,10 @@ class Role extends Model
         ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => 'boolean',
     ];
 
-    public $availableRelations = ['translates', 'privileges'];
+    public $availableRelations = ['translates', 'permissions'];
 
-    public function privileges()
+    public function permissions()
     {
-        return $this->belongsToMany(Privilege::class, 'acl_pivot_privilege_role');
+        return $this->belongsToMany(Permission::class, 'acl_pivot_permission_role');
     }
 }

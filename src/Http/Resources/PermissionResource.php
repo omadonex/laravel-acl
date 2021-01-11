@@ -5,7 +5,7 @@ namespace Omadonex\LaravelAcl\Http\Resources;
 use Illuminate\Http\Resources\Json\Resource;
 use Omadonex\LaravelLocale\Traits\TranslateResourceTrait;
 
-class PrivilegeResource extends Resource
+class PermissionResource extends Resource
 {
     use TranslateResourceTrait;
 
@@ -19,6 +19,6 @@ class PrivilegeResource extends Resource
     {
         return array_merge([
             'id' => $this->id,
-        ], $this->getTranslateIfLoaded(PrivilegeTranslateResource::class, false));
+        ], $this->getTranslateIfLoaded(PermissionTranslateResource::class, false));
     }
 }

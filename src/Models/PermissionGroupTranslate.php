@@ -4,9 +4,9 @@ namespace Omadonex\LaravelAcl\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PrivilegeTranslate extends Model
+class PermissionGroupTranslate extends Model
 {
-    protected $table = 'acl_privilege_translates';
+    protected $table = 'acl_permission_group_translates';
     protected $fillable = ['model_id', 'lang', 'name', 'description'];
     public $timestamps = false;
 }

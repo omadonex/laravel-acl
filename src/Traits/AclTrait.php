@@ -2,7 +2,7 @@
 
 namespace Omadonex\LaravelAcl\Traits;
 
-use Omadonex\LaravelAcl\Models\Privilege;
+use Omadonex\LaravelAcl\Models\Permission;
 use Omadonex\LaravelAcl\Models\Role;
 
 trait AclTrait
@@ -12,8 +12,8 @@ trait AclTrait
         return $this->belongsToMany(Role::class, 'acl_pivot_role_user');
     }
 
-    public function privileges()
+    public function permissions()
     {
-        return $this->belongsToMany(Privilege::class, 'acl_pivot_privilege_user');
+        return $this->belongsToMany(Permission::class, 'acl_pivot_permission_user');
     }
 }

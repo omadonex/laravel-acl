@@ -14,9 +14,9 @@ class Acl {
      */
     public function handle($request, Closure $next) {
         $actions = $request->route()->getAction();
-        $privileges = array_key_exists('privileges', $actions) ? $actions['privileges'] : null;
+        $permissions = array_key_exists('permissions', $actions) ? $actions['permissions'] : null;
 
-        if (!$privileges || app('acl')->check($privileges)) {
+        if (!$permissions || app('acl')->check($permissions)) {
             return $next($request);
         }
 

@@ -4,7 +4,7 @@ namespace Omadonex\LaravelAcl\Http\Resources;
 
 use Illuminate\Http\Resources\Json\Resource;
 
-class PrivilegeTranslateResource extends Resource
+class PermissionTranslateResource extends Resource
 {
     /**
      * Transform the resource into an array.

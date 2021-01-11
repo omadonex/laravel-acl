@@ -2,15 +2,15 @@
 
 return [
     'roles' => [
-        //['id' => 'admin', 'staff' => true, 'privileges' => [
-            //'privilege1',
+        //['id' => 'admin', 'staff' => true, 'permissions' => [
+            //'permission',
             //...
         //]],
         //...
     ],
 
-    'privileges' => [
-        //['id' => 'privilege1'],
+    'permissions' => [
+        //['id' => 'permission'],
         //...
     ],
 ];

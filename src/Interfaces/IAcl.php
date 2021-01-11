@@ -6,9 +6,9 @@ interface IAcl
 {
     public function isDeepMode();
 
-    public function getAvailableRoles($privileges = true);
+    public function getAvailableRoles($permissions = true);
 
-    public function getAvailablePrivileges();
+    public function getAvailablePermissions();
 
     public function loggedIn();
 
@@ -18,19 +18,19 @@ interface IAcl
 
     public function getRoles($onlyNames = false);
 
-    public function getPrivileges($onlyNames = false);
+    public function getPermissions($onlyNames = false);
 
     public function hasRoles($roles);
 
     public function checkRoles($rolesCombined, $rootStrict = false);
 
-    public function check($privileges);
+    public function check($permissions);
 
     public function addRole($role, $user = null);
 
-    public function addPrivilege($privilege, $user = null);
+    public function addPermission($permission, $user = null);
 
     public function removeRole($role, $user = null);
 
-    public function removePrivilege($privilege, $user = null);
+    public function removePermission($permission, $user = null);
 }
