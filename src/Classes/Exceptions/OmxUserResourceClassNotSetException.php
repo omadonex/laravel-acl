@@ -7,6 +7,6 @@ class OmxUserResourceClassNotSetException extends \Exception
     public function __construct()
     {
         $className = get_class($this);
-        parent::__construct(trans("acl::exceptions.{$className}.message"));
+        parent::__construct(trans("acl::exception.{$className}.message"));
     }
 }

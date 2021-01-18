@@ -3,6 +3,7 @@
 namespace Omadonex\LaravelAcl\Http\Middleware;
 
 use Closure;
+use Omadonex\LaravelAcl\Interfaces\IAclService;
 
 class AclRole {
     /**
@@ -13,10 +14,13 @@ class AclRole {
      * @return mixed
      */
     public function handle($request, Closure $next) {
-        $actions = $request->route()->getAction();
-        $roles = array_key_exists('roles', $actions) ? $actions['roles'] : null;
+        /** @var IAclService $aclService */
+        $aclService = app(IAclService::class);
 
-        if (!$roles || app('acl')->checkRoles($roles)) {
+        $actions = $request->route()->getAction();
+        $roles = $actions['roles'] ?? [];
+
+        if (!$roles || $aclService->checkRole($roles)) {
             return $next($request);
         }
 

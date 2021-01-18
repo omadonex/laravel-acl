@@ -20,7 +20,9 @@ class AclServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom("{$pathRoot}/database/migrations");
 
         $this->publishes([
-            "{$pathRoot}/config/acl.php" => config_path('acl.php'),
+            "{$pathRoot}/config/role.php" => config_path('acl/role.php'),
+            "{$pathRoot}/config/permission.php" => config_path('acl/permission.php'),
+            "{$pathRoot}/config/route.php" => config_path('acl/route.php'),
         ], 'config');
 
         $this->publishes([

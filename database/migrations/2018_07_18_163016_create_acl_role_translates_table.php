@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Omadonex\LaravelSupport\Classes\Utils\UtilsDb;
 
 class CreateAclRoleTranslatesTable extends Migration
 {
@@ -14,12 +15,11 @@ class CreateAclRoleTranslatesTable extends Migration
     public function up()
     {
         Schema::create('acl_role_translates', function (Blueprint $table) {
-            \Omadonex\LaravelSupport\Classes\Utils\UtilsDb::addTransFields($table, true);
+            UtilsDb::addTransFields($table, true);
+            UtilsDb::addProtectedGenerateField($table);
 
             $table->string('name');
             $table->text('description');
-
-            \Omadonex\LaravelSupport\Classes\Utils\UtilsDb::addProtectedGenerateField($table);
         });
     }
 

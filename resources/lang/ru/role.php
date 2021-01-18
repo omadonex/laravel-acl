@@ -1,14 +1,14 @@
 <?php
 
-use Omadonex\LaravelAcl\Classes\ConstantsAcl;
+use Omadonex\LaravelAcl\Classes\ConstAcl;
 
 return [
-    ConstantsAcl::ROLE_USER => [
+    ConstAcl::ROLE_USER => [
         'name' => 'Пользователь',
         'description' => 'Роль по умолчанию для всех пользователей',
     ],
 
-    ConstantsAcl::ROLE_ROOT => [
+    ConstAcl::ROLE_ROOT => [
         'name' => 'Root',
         'description' => 'Роль для пользователя с самыми широкими правами (root)',
     ],

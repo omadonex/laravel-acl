@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Omadonex\LaravelSupport\Classes\Utils\UtilsDb;
 
 class CreateAclPermissionTranslatesTable extends Migration
 {
@@ -14,7 +15,7 @@ class CreateAclPermissionTranslatesTable extends Migration
     public function up()
     {
         Schema::create('acl_permission_translates', function (Blueprint $table) {
-            \Omadonex\LaravelSupport\Classes\Utils\UtilsDb::addTransFields($table, true);
+            UtilsDb::addTransFields($table, true);
 
             $table->string('name');
             $table->text('description');

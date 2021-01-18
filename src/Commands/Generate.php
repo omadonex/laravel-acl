@@ -4,14 +4,15 @@ namespace Omadonex\LaravelAcl\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
-use Omadonex\LaravelAcl\Classes\ConstantsAcl;
+use Nwidart\Modules\Facades\Module;
+use Omadonex\LaravelAcl\Classes\ConstAcl;
 use Omadonex\LaravelAcl\Models\PermissionGroup;
 use Omadonex\LaravelAcl\Models\PermissionGroupTranslate;
 use Omadonex\LaravelAcl\Models\PermissionTranslate;
 use Omadonex\LaravelAcl\Models\RoleTranslate;
 use Omadonex\LaravelAcl\Models\Permission;
 use Omadonex\LaravelAcl\Models\Role;
-use Omadonex\LaravelSupport\Classes\ConstantsCustom;
+use Omadonex\LaravelSupport\Classes\ConstCustom;
 
 class Generate extends Command
 {
@@ -47,7 +48,9 @@ class Generate extends Command
      */
     public function handle()
     {
-        if (!file_exists(resource_path('lang/vendor/acl')) || !file_exists(base_path('config/acl.php'))) {
+        if (!file_exists(resource_path('lang/vendor/acl'))
+            || !file_exists(base_path('config/acl/role.php'))
+            || !file_exists(base_path('config/acl/permission.php'))) {
             $this->error('Error: main config and lang files are not published!');
 
             return ;
@@ -59,124 +62,170 @@ class Generate extends Command
         PermissionGroup::truncate();
         PermissionGroupTranslate::truncate();
         PermissionTranslate::truncate();
-        \DB::table('acl_pivot_permission_role')->where(ConstantsCustom::DB_FIELD_PROTECTED_GENERATE, true)->delete();
+        \DB::table('acl_pivot_permission_role')->where(ConstCustom::DB_FIELD_PROTECTED_GENERATE, true)->delete();
 
-        $aclEntries = [
-            ['configPath' => base_path('config/acl.php'), 'langPath' => resource_path('lang/vendor/acl'), 'module' => false],
+        $aclEntryList = [
+            [
+                'configRole' => base_path('config/acl/role.php'),
+                'configPermission' => base_path('config/acl/permission.php'),
+                'langPath' => resource_path('lang/vendor/acl'),
+                'module' => 'app',
+            ],
         ];
+
         if (class_exists(self::NWIDART_CLASS)) {
-            foreach (\Nwidart\Modules\Facades\Module::all() as $module) {
-                $configPath = $module->getExtraPath('Config/acl/acl.php');
-                $langPath = $module->getExtraPath('Config/acl/lang');
-                if (file_exists($configPath)) {
-                    $aclEntries[] = [
-                        'configPath' => $configPath,
-                        'langPath' => $langPath,
-                        'module' => true,
-                    ];
-                }
+            foreach (Module::all() as $module) {
+                $configPath = $module->getExtraPath('Config/acl');
+                $aclEntryList[] = [
+                    'configRole' => "{$configPath}/role.php",
+                    'configPermission' => "{$configPath}/permission.php",
+                    'langPath' => $module->getExtraPath('Config/acl/lang'),
+                    'module' => $module->getLowerName(),
+                ];
             }
         }
 
         Model::unguard();
 
-        $allPermissions = [];
-        foreach ($aclEntries as $aclEntry) {
-            $config = include $aclEntry['configPath'];
+        $permissionList = [];
+        $roleList = [];
+        foreach ($aclEntryList as $aclEntry) {
+            $configRole = file_exists($aclEntry['configRole']) ? include $aclEntry['configRole'] : [];
+            $configPermission = file_exists($aclEntry['configPermission']) ? include $aclEntry['configPermission'] : [];
             $langPath = $aclEntry['langPath'];
-            $rolesConfig = array_key_exists('roles', $config) ? $config['roles'] : [];
-            $permissionsConfig = array_key_exists('permissions', $config) ? $config['permissions'] : [];
-            $permissionsGroupsConfig = array_key_exists('permissionsGroups', $config) ? $config['permissionsGroups'] : [];
-            $extendConfig = array_key_exists('extend', $config) ? $config['extend'] : [];
+            $langKeyList = array_diff(scandir($langPath), ['.', '..']);
 
-            $langKeys = array_diff(scandir($langPath), ['.', '..']);
+            $permissionList = array_merge($permissionList, $this->createPermission($configPermission, $langPath, $langKeyList, $aclEntry['module']));
+            $roleList = array_merge($roleList, $this->createRole($configRole, $langPath, $langKeyList, $aclEntry['module']));
+        }
 
-            foreach ($permissionsConfig as $permissionConfig) {
-                $allPermissions[] = $permissionConfig['id'];
-                $createData = ['id' => $permissionConfig['id']];
-                if (isset($permissionConfig['permission_group_id'])) {
-                    $createData['permission_group_id'] = $permissionConfig['permission_group_id'];
-                }
-                Permission::create($createData);
+        $roleIdList = Role::all()->pluck('role_id')->toArray();
+        \DB::table('acl_pivot_permission_role')->whereNotIn('permission_id', $permissionList)->delete();
+        \DB::table('acl_pivot_permission_user')->whereNotIn('permission_id', $permissionList)->delete();
+        \DB::table('acl_pivot_role_user')->whereNotIn('role_id', $roleIdList)->delete();
 
-                foreach ($langKeys as $lang) {
-                    $langFile = include "{$langPath}/{$lang}/permissions.php";
-                    PermissionTranslate::create([
-                        'model_id' => $permissionConfig['id'],
-                        'lang' => $lang,
-                        'name' => $langFile[$permissionConfig['id']]['name'],
-                        'description'  => $langFile[$permissionConfig['id']]['description'],
-                    ]);
-                }
-            }
+        Model::reguard();
+    }
 
-            if (!$aclEntry['module']) {
-                array_unshift($permissionsGroupsConfig,
-                    ['id' => ConstantsAcl::PERMISSION_GROUP_ID_DEFAULT]
-                );
-            }
+    /**
+     * @param array $data
+     * @param string $langPath
+     * @param array $langKeyList
+     * @param string $module
+     * @return array
+     */
+    private function createRole(array $data, string $langPath, array $langKeyList, string $module): array
+    {
+        $createdList = [];
 
-            foreach ($permissionsGroupsConfig as $permissionGroupConfig) {
-                PermissionGroup::create([
-                    'id' => $permissionGroupConfig['id'],
+        if ($module === 'app') {
+            $data[ConstAcl::ROLE_USER] = [];
+            $data[ConstAcl::ROLE_ROOT] = ['staff' => true];
+        }
+
+        foreach ($data as $roleId => $roleData) {
+            $createdList[] = $roleId;
+
+            $role = Role::create([
+                'id' => $roleId,
+                'is_root' => $roleId === ConstAcl::ROLE_ROOT,
+                'is_staff' => $roleData['staff'] ?? false,
+                ConstCustom::DB_FIELD_PROTECTED_GENERATE => true,
+            ]);
+
+            foreach ($langKeyList as $lang) {
+                $langFile = "{$langPath}/{$lang}/role.php";
+                $langData = file_exists($langFile) ? include $langFile : [];
+                RoleTranslate::create([
+                    'model_id' => $roleId,
+                    'lang' => $lang,
+                    'name' => $langData[$roleId]['name'],
+                    'description'  => $langData[$roleId]['description'],
+                    ConstCustom::DB_FIELD_PROTECTED_GENERATE => true,
                 ]);
-
-                foreach ($langKeys as $lang) {
-                    $langFile = include "{$langPath}/{$lang}/permissionsGroups.php";
-                    PermissionGroupTranslate::create([
-                        'model_id' => $permissionGroupConfig['id'],
-                        'lang' => $lang,
-                        'name' => $langFile[$permissionGroupConfig['id']]['name'],
-                        'description'  => $langFile[$permissionGroupConfig['id']]['description'],
-                    ]);
-                }
             }
 
-            if (!$aclEntry['module']) {
-                array_unshift($rolesConfig,
-                    ['id' => ConstantsAcl::ROLE_USER],
-                    ['id' => ConstantsAcl::ROLE_ROOT, 'staff' => true]
-                );
-            }
-
-            foreach ($rolesConfig as $roleConfig) {
-                $staff = array_key_exists('staff', $roleConfig) ? $roleConfig['staff'] : false;
-                $root = $roleConfig['id'] === ConstantsAcl::ROLE_ROOT;
-
-                $role = Role::create([
-                    'id' => $roleConfig['id'],
-                    'is_root' => $root,
-                    'is_staff' => $staff,
-                    ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
-                ]);
-
-                foreach ($langKeys as $lang) {
-                    $langFile = include "{$langPath}/{$lang}/roles.php";
-                    RoleTranslate::create([
-                        'model_id' => $roleConfig['id'],
-                        'lang' => $lang,
-                        'name' => $langFile[$roleConfig['id']]['name'],
-                        'description'  => $langFile[$roleConfig['id']]['description'],
-                        ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true,
-                    ]);
-                }
-
-                if (array_key_exists('permissions', $roleConfig)) {
-                    $permissions = $roleConfig['permissions'];
-                    foreach ($permissions as $permission) {
-                        $role->permissions()->attach($permission, [ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true]);
-                    }
-                }
-            }
-
-            foreach ($extendConfig as $roleKey => $permissionsKeys) {
-                Role::find($roleKey)->permissions()->attach($permissionsKeys, [ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => true]);
+            foreach ($data['permissions'] ?? [] as $permission) {
+                $role->permissions()->attach($permission, [ConstCustom::DB_FIELD_PROTECTED_GENERATE => true]);
             }
         }
 
-        \DB::table('acl_pivot_permission_role')->whereNotIn('permission_id', $allPermissions)->delete();
-        \DB::table('acl_pivot_permission_user')->whereNotIn('permission_id', $allPermissions)->delete();
+        return $createdList;
+    }
 
-        Model::reguard();
+    /**
+     * @param array $data
+     * @param string $langPath
+     * @param array $langKeyList
+     * @param string $module
+     * @param string|null $permissionGroupId
+     * @return array
+     */
+    private function createPermission(array $data, string $langPath, array $langKeyList, string $module, string $permissionGroupId = null): array
+    {
+        $createdList = [];
+
+        if ($permissionGroupId === null) {
+            $permissionGroupId = $module;
+            $this->createPermissionGroup($permissionGroupId, null, 0, $langPath, $langKeyList);
+        }
+
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $permissionId = $value;
+                $createdList[] = $permissionId;
+                Permission::create([
+                    'id' => $permissionId,
+                    'permission_group_id' => $permissionGroupId,
+                ]);
+
+                foreach ($langKeyList as $lang) {
+                    $langFile = "{$langPath}/{$lang}/permission.php";
+                    $langData = file_exists($langFile) ? include $langFile : [];
+                    PermissionTranslate::create([
+                        'model_id' => $permissionId,
+                        'lang' => $lang,
+                        'name' => $langData[$permissionId]['name'],
+                        'description'  => $langData[$permissionId]['description'],
+                    ]);
+                }
+            } elseif (is_array($value)) {
+                $groupId = $key;
+                $permissionList = $value;
+                $this->createPermissionGroup($groupId, $permissionGroupId, 0, $langPath, $langKeyList);
+                $createdList = array_merge($createdList, $this->createPermission($permissionList, $langPath, $langKeyList, $module, $groupId));
+            }
+        }
+
+        return $createdList;
+    }
+
+    /**
+     * @param string $id
+     * @param string $parentId
+     * @param int $order
+     * @param string $langPath
+     * @param array $langKeyList
+     */
+    private function createPermissionGroup(string $id, string $parentId, int $order, string $langPath, array $langKeyList): void
+    {
+        if (!PermissionGroup::find($id)) {
+            PermissionGroup::create([
+                'id' => $id,
+                'parent_group_id' => $parentId,
+                'order' => $order,
+            ]);
+
+            foreach ($langKeyList as $lang) {
+                $langFile = "{$langPath}/{$lang}/permissionGroup.php";
+                $langData = file_exists($langFile) ? include $langFile : [];
+                PermissionGroupTranslate::create([
+                    'model_id' => $id,
+                    'lang' => $lang,
+                    'name' => $langData[$id]['name'],
+                    'description' => $langData[$id]['description'],
+                ]);
+            }
+        }
     }
 }

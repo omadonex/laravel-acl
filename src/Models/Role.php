@@ -3,7 +3,7 @@
 namespace Omadonex\LaravelAcl\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Omadonex\LaravelSupport\Classes\ConstantsCustom;
+use Omadonex\LaravelSupport\Classes\ConstCustom;
 use Omadonex\LaravelSupport\Traits\ProtectedGenerateTrait;
 use Omadonex\LaravelLocale\Traits\TranslateTrait;
 
@@ -17,7 +17,7 @@ class Role extends Model
     public $timestamps = false;
 
     protected $casts = [
-        ConstantsCustom::DB_FIELD_PROTECTED_GENERATE => 'boolean',
+        ConstCustom::DB_FIELD_PROTECTED_GENERATE => 'boolean',
     ];
 
     public $availableRelations = ['translates', 'permissions'];

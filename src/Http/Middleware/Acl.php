@@ -3,6 +3,7 @@
 namespace Omadonex\LaravelAcl\Http\Middleware;
 
 use Closure;
+use Omadonex\LaravelAcl\Interfaces\IAclService;
 
 class Acl {
     /**
@@ -13,10 +14,13 @@ class Acl {
      * @return mixed
      */
     public function handle($request, Closure $next) {
-        $actions = $request->route()->getAction();
-        $permissions = array_key_exists('permissions', $actions) ? $actions['permissions'] : null;
+        /** @var IAclService $aclService */
+        $aclService = app(IAclService::class);
 
-        if (!$permissions || app('acl')->check($permissions)) {
+        $actions = $request->route()->getAction();
+        $permissions = $actions['permissions'] ?? null;
+
+        if (!$permissions || $aclService->check($permissions)) {
             return $next($request);
         }
 

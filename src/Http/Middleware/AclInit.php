@@ -3,6 +3,7 @@
 namespace Omadonex\LaravelAcl\Http\Middleware;
 
 use Closure;
+use Omadonex\LaravelAcl\Interfaces\IAclService;
 
 class AclInit {
     /**
@@ -13,8 +14,11 @@ class AclInit {
      * @return mixed
      */
     public function handle($request, Closure $next) {
+        /** @var IAclService $aclService */
+        $aclService = app(IAclService::class);
+
         if ($request->user()) {
-            app('acl')->setUser($request->user());
+            $aclService->setUser($request->user());
         }
 
         return $next($request);

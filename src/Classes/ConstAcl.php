@@ -2,12 +2,12 @@
 
 namespace Omadonex\LaravelAcl\Classes;
 
-class ConstantsAcl
+class ConstAcl
 {
     const ROLE_ROOT = 'root';
     const ROLE_USER = 'user';
 
-    const PERMISSION_GROUP_ID_DEFAULT = 'default';
+    const APP_PERMISSION_GROUP_ID= 'app';
 
     const ASSIGN_TYPE_SYSTEM = 1;
     const ASSIGN_TYPE_ROOT = 2;
