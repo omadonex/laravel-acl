@@ -16,7 +16,6 @@ class CreateAclPivotRoleUserTable extends Migration
     public function up()
     {
         Schema::create('acl_pivot_role_user', function (Blueprint $table) {
-            $table->increments('role_user_id');
             $table->string('role_id', ConstCustom::DB_FIELD_LEN_STR_KEY)->index();
             $table->unsignedInteger('user_id')->index();
             $table->unsignedTinyInteger('assign_type')->default(ConstAcl::ASSIGN_TYPE_SYSTEM)->index();

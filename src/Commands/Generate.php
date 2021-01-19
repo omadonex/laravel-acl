@@ -93,7 +93,11 @@ class Generate extends Command
             $configRole = file_exists($aclEntry['configRole']) ? include $aclEntry['configRole'] : [];
             $configPermission = file_exists($aclEntry['configPermission']) ? include $aclEntry['configPermission'] : [];
             $langPath = $aclEntry['langPath'];
-            $langKeyList = array_diff(scandir($langPath), ['.', '..']);
+            if (file_exists($langPath)) {
+                $langKeyList = array_diff(scandir($langPath), ['.', '..']);
+            } else {
+                $langKeyList = [app()->currentLocale()];
+            }
 
             $permissionList = array_merge($permissionList, $this->createPermission($configPermission, $langPath, $langKeyList, $aclEntry['module']));
             $roleList = array_merge($roleList, $this->createRole($configRole, $langPath, $langKeyList, $aclEntry['module']));
@@ -139,13 +143,13 @@ class Generate extends Command
                 RoleTranslate::create([
                     'model_id' => $roleId,
                     'lang' => $lang,
-                    'name' => $langData[$roleId]['name'],
-                    'description'  => $langData[$roleId]['description'],
+                    'name' => $langData[$roleId]['name'] ?? $roleId,
+                    'description'  => $langData[$roleId]['description'] ?? $roleId,
                     ConstCustom::DB_FIELD_PROTECTED_GENERATE => true,
                 ]);
             }
 
-            foreach ($data['permissions'] ?? [] as $permission) {
+            foreach ($roleData['permissions'] ?? [] as $permission) {
                 $role->permissions()->attach($permission, [ConstCustom::DB_FIELD_PROTECTED_GENERATE => true]);
             }
         }
@@ -185,8 +189,8 @@ class Generate extends Command
                     PermissionTranslate::create([
                         'model_id' => $permissionId,
                         'lang' => $lang,
-                        'name' => $langData[$permissionId]['name'],
-                        'description'  => $langData[$permissionId]['description'],
+                        'name' => $langData[$permissionId]['name'] ?? $permissionId,
+                        'description'  => $langData[$permissionId]['description'] ?? $permissionId,
                     ]);
                 }
             } elseif (is_array($value)) {
@@ -202,17 +206,17 @@ class Generate extends Command
 
     /**
      * @param string $id
-     * @param string $parentId
+     * @param string|null $parentId
      * @param int $order
      * @param string $langPath
      * @param array $langKeyList
      */
-    private function createPermissionGroup(string $id, string $parentId, int $order, string $langPath, array $langKeyList): void
+    private function createPermissionGroup(string $id, ?string $parentId, int $order, string $langPath, array $langKeyList): void
     {
         if (!PermissionGroup::find($id)) {
             PermissionGroup::create([
                 'id' => $id,
-                'parent_group_id' => $parentId,
+                'parent_id' => $parentId,
                 'order' => $order,
             ]);
 
@@ -222,8 +226,8 @@ class Generate extends Command
                 PermissionGroupTranslate::create([
                     'model_id' => $id,
                     'lang' => $lang,
-                    'name' => $langData[$id]['name'],
-                    'description' => $langData[$id]['description'],
+                    'name' => $langData[$id]['name'] ?? $id,
+                    'description' => $langData[$id]['description'] ?? $id,
                 ]);
             }
         }

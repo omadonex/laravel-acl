@@ -16,7 +16,6 @@ class CreateAclPivotPermissionRoleTable extends Migration
     public function up()
     {
         Schema::create('acl_pivot_permission_role', function (Blueprint $table) {
-            $table->increments('permission_role_id');
             UtilsDb::addProtectedGenerateField($table);
             $table->string('permission_id', ConstCustom::DB_FIELD_LEN_STR_KEY)->index();
             $table->string('role_id', ConstCustom::DB_FIELD_LEN_STR_KEY)->index();

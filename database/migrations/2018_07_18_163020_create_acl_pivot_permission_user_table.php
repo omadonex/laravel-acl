@@ -16,7 +16,6 @@ class CreateAclPivotPermissionUserTable extends Migration
     public function up()
     {
         Schema::create('acl_pivot_permission_user', function (Blueprint $table) {
-            $table->increments('permission_user_id');
             $table->string('permission_id', ConstCustom::DB_FIELD_LEN_STR_KEY)->index();
             $table->unsignedInteger('user_id')->index();
             $table->unsignedTinyInteger('assign_type')->default(ConstAcl::ASSIGN_TYPE_SYSTEM)->index();
