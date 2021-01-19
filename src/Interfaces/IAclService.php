@@ -118,6 +118,11 @@ interface IAclService
     /**
      * @return bool
      */
+    public function isLoggedIn(): bool;
+
+    /**
+     * @return bool
+     */
     public function isRoot(): bool;
 
     /**

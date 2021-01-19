@@ -328,6 +328,14 @@ class AclService implements IAclService
     /**
      * @return bool
      */
+    public function isLoggedIn(): bool
+    {
+        return (bool) $this->user;
+    }
+
+    /**
+     * @return bool
+     */
     public function isRoot(): bool
     {
         return in_array(ConstAcl::ROLE_ROOT, $this->roleList->toArray());
@@ -394,6 +402,35 @@ class AclService implements IAclService
         if (!$this->roleList->count()) {
             $this->roleList->push(Role::with('translates')->find(ConstAcl::ROLE_USER));
         }
+    }
+
+    /**
+     * @param array $moduleList
+     * @return array
+     */
+    public static function generateRouteMap(array $moduleList = []): array
+    {
+        $routeMapEntryList = [config('acl.route')];
+        foreach ($moduleList as $module) {
+            $lowerName = $module->getLowerName();
+            $routeMapEntryList[] = config("{$lowerName}::acl.route");
+        }
+
+        $routeMap = [];
+        foreach ([
+            IAclService::SECTION_DENIED,
+            IAclService::SECTION_ALLOWED,
+            IAclService::SECTION_PROTECTED,
+        ] as $section) {
+            $routeMap[$section] = [];
+            foreach ($routeMapEntryList as $entry) {
+                if ($entry) {
+                    $routeMap[$section] = array_merge($routeMap[$section], $entry[$section]);
+                }
+            }
+        }
+
+        return $routeMap;
     }
 
     /**
