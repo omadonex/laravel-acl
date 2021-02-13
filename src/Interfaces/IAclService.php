@@ -111,11 +111,6 @@ interface IAclService
     public function getRoutesData(): array;
 
     /**
-     * @return mixed
-     */
-    public function getUser();
-
-    /**
      * @return bool
      */
     public function isDeepMode(): bool;
@@ -151,4 +146,9 @@ interface IAclService
      * @param User $user
      */
     public function setUser(User $user): void;
+
+    /**
+     * @return mixed
+     */
+    public function user(bool $resource = false, $resourceClass = null);
 }

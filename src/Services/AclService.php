@@ -306,30 +306,6 @@ class AclService implements IAclService
     }
 
     /**
-     * @param bool $resource
-     * @param null $resourceClass
-     * @return false|string|null
-     * @throws OmxUserResourceClassNotSetException
-     */
-    public function getUser(bool $resource = false, $resourceClass = null)
-    {
-        if (!$this->user) {
-            return null;
-        }
-
-        if (!$resource) {
-            return $this->user;
-        }
-
-        $resourceClass = $resourceClass ?: $this->userResourceClass;
-        if (!$resourceClass) {
-            throw new OmxUserResourceClassNotSetException;
-        }
-
-        return json_encode((new $resourceClass($this->user))->toResponse(app('request'))->getData()->data);
-    }
-
-    /**
      * @return bool
      */
     public function isDeepMode(): bool
@@ -414,6 +390,30 @@ class AclService implements IAclService
         if (!$this->roleList->count()) {
             $this->roleList->push(Role::with('translates')->find(ConstAcl::ROLE_USER));
         }
+    }
+
+    /**
+     * @param bool $resource
+     * @param null $resourceClass
+     * @return false|string|null
+     * @throws OmxUserResourceClassNotSetException
+     */
+    public function user(bool $resource = false, $resourceClass = null)
+    {
+        if (!$this->user) {
+            return null;
+        }
+
+        if (!$resource) {
+            return $this->user;
+        }
+
+        $resourceClass = $resourceClass ?: $this->userResourceClass;
+        if (!$resourceClass) {
+            throw new OmxUserResourceClassNotSetException;
+        }
+
+        return json_encode((new $resourceClass($this->user))->toResponse(app('request'))->getData()->data);
     }
 
     /**
