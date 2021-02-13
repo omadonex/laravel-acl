@@ -17,6 +17,11 @@ interface IAclService
     const SECTION_PROTECTED = 'protected';
 
     /**
+     * @return int|null
+     */
+    public function id(): ?int;
+
+    /**
      * @param $role
      * @param User|null $user
      */

@@ -48,6 +48,18 @@ class AclService implements IAclService
     }
 
     /**
+     * @return int|null
+     */
+    public function id(): ?int
+    {
+        if (!$this->user) {
+            return null;
+        }
+
+        return $this->user->getKey();
+    }
+
+    /**
      * @param $role
      * @param User|null $user
      */
