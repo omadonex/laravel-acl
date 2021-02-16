@@ -482,6 +482,12 @@ class AclService implements IAclService
         return false;
     }
 
+    public function refreshUser(bool $resource = false, $resourceClass = null)
+    {
+        $this->user->refresh();
+        return $this->user($resource, $resourceClass);
+    }
+
     private function runForUser($user, $func, $params)
     {
         $currUser = $this->user;
