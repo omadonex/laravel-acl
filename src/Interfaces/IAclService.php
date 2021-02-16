@@ -131,6 +131,11 @@ interface IAclService
     public function isUser(): bool;
 
     /**
+     * @return User
+     */
+    public function refreshUser(bool $resource = false, $resourceClass = null);
+
+    /**
      * @param $role
      * @param User|null $user
      */
