@@ -131,7 +131,9 @@ interface IAclService
     public function isUser(): bool;
 
     /**
-     * @return User
+     * @param bool $resource
+     * @param null $resourceClass
+     * @return mixed
      */
     public function refreshUser(bool $resource = false, $resourceClass = null);
 

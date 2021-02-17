@@ -395,7 +395,7 @@ class AclService implements IAclService
     /**
      * @param bool $resource
      * @param null $resourceClass
-     * @return false|string|null
+     * @return mixed
      * @throws OmxUserResourceClassNotSetException
      */
     public function user(bool $resource = false, $resourceClass = null)
@@ -482,6 +482,12 @@ class AclService implements IAclService
         return false;
     }
 
+    /**
+     * @param bool $resource
+     * @param null $resourceClass
+     * @return mixed
+     * @throws OmxUserResourceClassNotSetException
+     */
     public function refreshUser(bool $resource = false, $resourceClass = null)
     {
         $this->user->refresh();
