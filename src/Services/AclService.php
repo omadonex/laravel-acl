@@ -139,11 +139,11 @@ class AclService implements IAclService
         }
 
         if ($type === self::CHECK_TYPE_AND) {
-            return !array_diff($roles, $this->roleList->toArray());
+            return !array_diff($roles, $this->roleList->map->id->toArray());
         }
 
         if ($type === self::CHECK_TYPE_OR) {
-            return (bool)array_intersect($roles, $this->roleList->toArray());
+            return (bool)array_intersect($roles, $this->roleList->map->id->toArray());
         }
 
         return false;
@@ -326,7 +326,7 @@ class AclService implements IAclService
      */
     public function isRoot(): bool
     {
-        return in_array(ConstAcl::ROLE_ROOT, $this->roleList->toArray());
+        return in_array(ConstAcl::ROLE_ROOT, $this->roleList->map->id->toArray());
     }
 
     /**

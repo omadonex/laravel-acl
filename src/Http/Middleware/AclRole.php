@@ -19,8 +19,9 @@ class AclRole {
 
         $actions = $request->route()->getAction();
         $roles = $actions['roles'] ?? [];
+        $type = $actions['type'] ?? $aclService::CHECK_TYPE_OR;
 
-        if (!$roles || $aclService->checkRole($roles)) {
+        if (!$roles || $aclService->checkRole($roles, $type)) {
             return $next($request);
         }
 
