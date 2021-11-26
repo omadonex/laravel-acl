@@ -10,6 +10,7 @@ use Omadonex\LaravelAcl\Classes\Exceptions\OmxUserResourceClassNotSetException;
 use Omadonex\LaravelAcl\Interfaces\IAclService;
 use Omadonex\LaravelAcl\Models\Permission;
 use Omadonex\LaravelAcl\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class AclService implements IAclService
 {
@@ -147,6 +148,65 @@ class AclService implements IAclService
         }
 
         return false;
+    }
+
+    /**
+     * @param int $userId
+     * @return int
+     */
+    public function getUserCurrentLevel(int $userId): int
+    {
+        $experience = DB::table('game_user_game_infos')->where('user_id', $userId)->first()->experience;
+
+        return DB::table('game_levels')->where('experience', '<=', $experience)->orderBy('id', 'desc')->first()->id;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $rewardsType
+     * @return int
+     */
+    public function getUserGameRewards(int $userId, string $rewardsType): int
+    {
+        return DB::table('game_user_game_infos')->where('user_id', $userId)->first()->$rewardsType;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxUserExperience(): int
+    {
+        return DB::table('game_levels')->select('experience')->orderBy('experience', 'desc')->first()->experience;
+    }
+
+    /**
+     * @param int $tag_id
+     * @param int $user_id
+     * @return int
+     */
+    public function countTagUserLessonsCompleted(int $tag_id, int $user_id): int
+    {
+        return DB::table('content_lessons')
+            ->join('content_taggables', 'content_lessons.id', '=', 'content_taggables.taggable_id')
+            ->join('content_user_lessons', 'content_lessons.id', '=', 'content_user_lessons.lesson_id')
+            ->where('content_taggables.taggable_type', 'Modules\Content\Models\Lesson')
+            ->where('content_taggables.tag_id', $tag_id)
+            ->where('content_user_lessons.user_id', $user_id)
+            ->where('content_user_lessons.solution', 1)
+            ->get()->count();
+    }
+
+    /**
+     * @param int $tag_id
+     * @return int
+     */
+    public function countTagLessons(int $tag_id): int
+    {
+        return $lessonList = DB::table('content_lessons')
+            ->join('content_taggables', 'content_lessons.id', '=', 'content_taggables.taggable_id')
+            ->where('content_taggables.taggable_type', 'Modules\Content\Models\Lesson')
+            ->where('content_taggables.tag_id', $tag_id)
+            ->get()->count();
     }
 
     /**

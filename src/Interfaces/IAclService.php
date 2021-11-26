@@ -59,6 +59,37 @@ interface IAclService
     public function checkRole($roles, string $type = self::CHECK_TYPE_AND, bool $strict = false): bool;
 
     /**
+     * @param int $userId
+     * @return int
+     */
+    public function getUserCurrentLevel(int $userId): int;
+
+    /**
+     * @param int $userId
+     * @param string $rewardsType
+     * @return int
+     */
+    public function getUserGameRewards(int $userId, string $rewardsType): int;
+
+    /**
+     * @return int
+     */
+    public function getMaxUserExperience(): int;
+
+    /**
+     * @param int $tag_id
+     * @param int $user_id
+     * @return int
+     */
+    public function countTagUserLessonsCompleted(int $tag_id, int $user_id): int;
+
+    /**
+     * @param int $tag_id
+     * @return int
+     */
+    public function countTagLessons(int $tag_id): int;
+
+    /**
      * @param $roles
      * @param User $user
      * @param string $type
